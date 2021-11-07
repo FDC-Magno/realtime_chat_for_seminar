@@ -93,7 +93,7 @@
 			console.log("nickname btn clicked")
 			const nickname = $('.nickname').val()
 			socket.emit('nickname', nickname)
-			$('.nickname').val('')
+			$('.nickname').attr('disabled', true)
 			$('#nickname').attr('disabled', true)
 		})
 
