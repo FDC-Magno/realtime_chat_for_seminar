@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realtime Chat</title>
+    <!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+	<script src="https://cdn.socket.io/4.3.2/socket.io.min.js" integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col-md-6 offset-md-3">
+				<div class="card">
+					<div class="card-body">
+						<h5 class="card-title">Realtime Chat</h5>
+						<div class="row">
+							<div class="col-md-6">
+								<div class="input-group">
+									<input type="text" class="form-control nickname" aria-label="...">
+									<div class="input-group-btn">
+										<button id="nickname" class="btn btn-primary">Set nickname</button>
+									</div>
+								</div>
+							</div>
+                        </div>
+						<div class="chat-container border my-3" style="height:300px; overflow-y: scroll;">
+						</div>
+						<div class="row">
+							<div class="col-md-12">
+								<div class="input-group">
+									<input type="text" class="chat form-control" aria-label="...">
+									<div class="input-group-btn">
+										<button id="chat" class="btn btn-primary">Send</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+	const socket = io();
+	socket.on('con_message', message => {
+		console.log(message)
+	})
+
+	socket.on('user_join', nickname => {
+		console.log(`${nickname} has entered the room!`)
+		let chat_container = $('.chat-container')
+		let message = `<div class="alert alert-light" role="alert">
+							${nickname} has entered the room!
+						</div>`
+		chat_container.append(message)
+	})
+
+	socket.on('chat', chat => {
+		console.log('someone sent a chat')
+		let chat_container = $('.chat-container')
+		let nickname = chat.nickname ?? 'Anonymous'
+		let message = `<div class="alert alert-light" role="alert">
+							${chat.nickname}: ${chat.chat}
+						</div>`
+		chat_container.append(message)
+		chat_container.scrollTop(chat_container.height())
+	})
+
+	socket.on('user_disconnect', nickname => {
+		if(nickname) {
+			console.log(`${nickname} has left the room!`)
+			let chat_container = $('.chat-container')
+			let message = `<div class="alert alert-light" role="alert">
+								${nickname} has left the room!
+							</div>`
+			chat_container.append(message)
+		}
+	})
+
+	$(document).ready(() => {
+
+		$('#nickname').click((e) => {
+			e.preventDefault()
+			console.log("nickname btn clicked")
+			const nickname = $('.nickname').val()
+			socket.emit('nickname', nickname)
+			$('.nickname').val('')
+			$('#nickname').attr('disabled', true)
+		})
+
+		$('#chat').click((e) => {
+			e.preventDefault()
+			console.log("chat btn clicked")
+			const chat = $('.chat').val()
+			socket.emit('send_chat', chat)
+			$('.chat').val('')
+		})
+	})
+</script>
+</html>
